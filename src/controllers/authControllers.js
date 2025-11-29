@@ -1,4 +1,4 @@
-const user = require('../models/User')
+const User = require('../models/User')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
@@ -11,15 +11,20 @@ const generateToken = (id) => {
 exports.register = async (req, res) => {
    try {
       const { username, email, password } = req.body
-      const userExists = await user.findOne({ email })
-      if (userExists) {
-         return res.status(400).json({ message: 'E-mail já cadastrado' })
+      
+      const emailExists = await User.findOne({ email })
+      if (emailExists) {
+         return res.status(400).json({ message: 'Este e-mail já foi cadastrado' })
+      }
+      const usernameExists = await User.findOne({ username })
+      if (usernameExists) {
+         return res.status(400).json({ message: 'Este nome de usuário já foi escolhido'})
       }
 
       const salt = await bcrypt.genSalt(10)
       const hashedPassword = await bcrypt.hash(password, salt)
 
-      const user = await user.create({
+      const user = await User.create({
          username,
          email,
          password: hashedPassword
@@ -45,7 +50,7 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
    try {
       const { email, password } = req.body
-      const user = await user.findOnde({ email })
+      const user = await User.findOne({ email })
 
       if (user && (await bcrypt.compare(password, user.password))) {
          res.json({
