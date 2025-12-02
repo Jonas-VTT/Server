@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken')
-const user = require('../models/User')
+const User = require('../models/User')
 
-const protect = async (req, res, next) => {
+const verifyToken = async (req, res, next) => {
    let token
 
    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -9,16 +9,17 @@ const protect = async (req, res, next) => {
          token = req.headers.authorization.split(' ')[1]
          const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
-         req.user = await user.findById(decoded.id).selected('-password')
+         req.user = await User.findById(decoded.id).select('-password')
          next()
       }
-      catch {
+      catch (error){
          console.error(error)
          res.status(401).json({ message: 'Não autorizado, token falhou' })
       }
    }
 
    if (!token) {
+      console.log("Erro na Auth: Sem token no header")
       res.status(401).json({ message: 'Não autorizado, sem token' })
    }
 }

@@ -14,6 +14,7 @@ app.use(express.json())
 const server = http.createServer(app)
 
 app.use('/api/auth', require('./routes/authRoutes'))
+app.use('/api/campaigns', require('./routes/campaignRoutes'))
 
 const io = new Server(server, {
   cors: {
