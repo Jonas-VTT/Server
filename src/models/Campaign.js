@@ -13,7 +13,7 @@ const CampaignSchema = new mongoose.Schema({
       }
    },
 
-   dm: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+   mestre: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
    players: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 
    scenes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Scene' }],

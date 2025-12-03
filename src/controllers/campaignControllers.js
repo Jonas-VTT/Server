@@ -15,7 +15,7 @@ exports.createCampaign = async (req, res) => {
       const newCampaign = await Campaign.create({
          title,
          system,
-         dm: req.user._id,
+         mestre: req.user._id,
          players: [req.user.id],
 
          features: {
@@ -39,7 +39,7 @@ exports.getUserCampaigns = async (req, res) => {
    try {
       const campaigns = await Campaign.find({
          $or: [
-            { dm: req.user.id },
+            { mestre: req.user.id },
             { players: req.user.id }
          ]
       }).sort({ createdAt: -1 })

@@ -2,8 +2,8 @@ const User = require('../models/User')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
-const generateToken = (id) => {
-   return jwt.sign({ id }, process.env.JWT_SECRET, {
+const generateToken = (id, role, username) => {
+   return jwt.sign({ id, role, username }, process.env.JWT_SECRET, {
       expiresIn: '90d'
    })
 }
@@ -11,14 +11,14 @@ const generateToken = (id) => {
 exports.register = async (req, res) => {
    try {
       const { username, email, password } = req.body
-      
+
       const emailExists = await User.findOne({ email })
       if (emailExists) {
          return res.status(400).json({ message: 'Este e-mail já foi cadastrado' })
       }
       const usernameExists = await User.findOne({ username })
       if (usernameExists) {
-         return res.status(400).json({ message: 'Este nome de usuário já foi escolhido'})
+         return res.status(400).json({ message: 'Este nome de usuário já foi escolhido' })
       }
 
       const salt = await bcrypt.genSalt(10)
@@ -35,7 +35,8 @@ exports.register = async (req, res) => {
             _id: user.id,
             username: user.username,
             email: user.email,
-            token: generateToken(user.id)
+            role: user.role,
+            token: generateToken(user.id, user.role)
          })
       }
       else {
@@ -57,7 +58,8 @@ exports.login = async (req, res) => {
             _id: user.id,
             username: user.username,
             email: user.email,
-            token: generateToken(user.id)
+            role: user.role,
+            token: generateToken(user.id, user.role)
          })
       }
       else {
@@ -66,6 +68,6 @@ exports.login = async (req, res) => {
    }
    catch (error) {
       console.error(error)
-      res.status(500).json({ message: 'Erro no servidor'})
+      res.status(500).json({ message: 'Erro no servidor' })
    }
 }
