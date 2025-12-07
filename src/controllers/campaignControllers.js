@@ -2,7 +2,7 @@ const Campaign = require('../models/Campaign')
 
 exports.createCampaign = async (req, res) => {
    try {
-      const { title, system, proceduralEnabled, proceduralType } = req.body
+      const { title, system, features } = req.body
 
       if (!req.user) {
          return res.status(401).json({ message: 'Usuário não autenticado.' });
@@ -18,14 +18,7 @@ exports.createCampaign = async (req, res) => {
          mestre: req.user._id,
          players: [req.user.id],
 
-         features: {
-            proceduralMap: {
-               enabled: proceduralEnabled || false,
-               config: {
-                  theme: proceduralType || 'none'
-               }
-            }
-         }
+         features: features || {}
       })
 
       res.status(201).json(newCampaign)
@@ -49,5 +42,27 @@ exports.getUserCampaigns = async (req, res) => {
    catch (error) {
       console.error('Erro ao buscar campanhas: ', error)
       res.status(500).json({ message: 'Erro ao buscar suas campanhas' })
+   }
+}
+exports.getCampaignById = async (req, res) => {
+   try {
+      const campaign = await Campaign.findById(req.params.id)
+         .populate('dm', 'username')
+         .populate('players', 'username')
+      if (!campaign) {
+         return res.status(404).json({message:'Campanha não encontrada'})
+      }
+
+      const isParticipant =
+         campaign.dm._id.toString() == req.user.id ||
+         campaign.players.some(p => p._id.toString() == req.user.id)
+      if (!isParticipant) {
+         return res.status(403).json({message: 'Você não tem acesso a esta campanha'})
+      }
+
+      res.json(campaign)
+   }
+   catch (error) {
+      res.status(500).json({ message: 'Erro ao buscar campanha'})
    }
 }
