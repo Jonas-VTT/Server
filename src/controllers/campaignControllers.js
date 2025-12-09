@@ -47,16 +47,18 @@ exports.getUserCampaigns = async (req, res) => {
 exports.getCampaignById = async (req, res) => {
    try {
       const campaign = await Campaign.findById(req.params.id)
-         .populate('dm', 'username')
+         .populate('mestre', 'username')
          .populate('players', 'username')
       if (!campaign) {
          return res.status(404).json({message:'Campanha não encontrada'})
       }
 
-      const isParticipant =
-         campaign.dm._id.toString() == req.user.id ||
-         campaign.players.some(p => p._id.toString() == req.user.id)
-      if (!isParticipant) {
+      const mestreId = campaign.mestre ? campaign.mestre._id.toString() : null
+      const userId = req.user.id
+
+      const isMestre = mestreId === userId
+
+      if (!isMestre && !isPlayer) {
          return res.status(403).json({message: 'Você não tem acesso a esta campanha'})
       }
 
