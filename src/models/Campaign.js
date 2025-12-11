@@ -15,12 +15,12 @@ const CampaignSchema = new mongoose.Schema({
 
    mestre: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
    players: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+   inviteCode: {type: String, unique: true, sparse: true},
 
    scenes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Scene' }],
    activeScene: { type: mongoose.Schema.Types.ObjectId, ref: 'Scene' },
 
    createdAt: { type: Date, default: Date.now }
-
 })
 
 module.exports = mongoose.model('Campaign', CampaignSchema)

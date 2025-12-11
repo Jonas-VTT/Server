@@ -1,9 +1,10 @@
 const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
+const crypto = require('crypto')
 
 const UPLOAD_ROOT = path.join(process.cwd(), 'src', 'uploads')
-const ALLOWED_FOLDERS = ['tokens']
+const ALLOWED_FOLDERS = ['tokens', 'images', 'videos']
 
 const storage = multer.diskStorage({
    destination: function (req, file, cb) {
@@ -26,8 +27,11 @@ const storage = multer.diskStorage({
    }
 })
 const fileFilter = (req, file, cb) => {
-   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
-   if (allowedTypes.includes(file.mimetype)) {
+   const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+      'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'
+   ]
+   if (allowedTypes.includes(file.mimetype)) {  
       cb(null, true);
    } else {
       cb(new Error('Tipo de arquivo inválido.'), false);
@@ -37,7 +41,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
    storage: storage,
    fileFilter: fileFilter,
-   limits: { fileSize: 1024 * 1024 * 10 }
+   limits: { fileSize: 1024 * 1024 * 100 }
 })
 
 module.exports = upload

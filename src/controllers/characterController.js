@@ -70,8 +70,22 @@ exports.createCharacter = async (req, res) => {
 exports.getMyCharacters = async (req, res) => {
    try {
       const { campaignId } = req.params
+      const campaign = await Campaign.findById(campaignId)
+      if (!campaign) return res.status(404).json({ message: "Campanha não encontrada" })
       const userId = req.user.id
-      const characters = await Character.find({ campaign: campaignId, $or: [{ owner: userId }, { sharedWith: userId }] })
+      const isMaster = campaign.mestre.toString() === userId
+
+      let filter = { campaign: campaignId }
+      if (isMaster) {
+         filter = { campaign: campaignId }
+      }
+      else {
+         filter = {
+            campaign: campaignId,
+            $or: [{ owner: userId }, { sharedWith: userId }]
+         }
+      }
+      const characters = await Character.find(filter)
          .populate('owner', 'name email')
          .populate('sharedWith', 'name email')
 
@@ -82,15 +96,23 @@ exports.getMyCharacters = async (req, res) => {
       res.status(500).json({ message: 'Erro ao buscar personagens' })
    }
 }
+
 exports.updateCharacter = async (req, res) => {
    try {
       const { id } = req.params
       const updates = req.body
       const userId = req.user.id
 
-      const oldChar = await Character.findOne({ _id: id, owner: userId })
+      const oldChar = await Character.findById(id).populate('campaign')
       if (!oldChar) {
          return res.status(404).json({ message: 'Personagem não encontrado' })
+      }
+
+      const isOwner = oldChar.owner.toString() === userId
+      const isShared = oldChar.sharedWith.includes(userId)
+      const isMaster = oldChar.campaign && oldChar.campaign?.mestre?.toString() === userId
+      if (!isOwner && !isShared && !isMaster) {
+         return res.status(403).json({ message: "Sem permissão para editar." })
       }
 
       if (updates.imageUrl && oldChar.imageUrl && updates.imageUrl !== oldChar.imageUrl) {
@@ -106,8 +128,8 @@ exports.updateCharacter = async (req, res) => {
          }
       }
 
-      const updatedCharacter = await Character.findOneAndUpdate(
-         { _id: id, owner: userId },
+      const updatedCharacter = await Character.findByIdAndUpdate(
+         id,
          { $set: updates },
          { new: true }
       )
@@ -116,6 +138,51 @@ exports.updateCharacter = async (req, res) => {
    catch (error) {
       console.error("Erro ao atualizar personagem:", error)
       res.status(500).json({ message: 'Erro ao salvar alterações' })
+   }
+}
+exports.getShareableUsers = async (req, res) => {
+   try {
+      const { id } = req.params
+      const currentUserId = req.user.id
+
+      const character = await Character.findById(id)
+      if (!character) {
+         return res.status(404).json({ message: "Personagem não encontrado" })
+      }
+
+      if (!character.campaign) {
+         return res.json([])
+      }
+
+      const campaign = await Campaign.findById(character.campaign)
+         .populate('mestre', 'username email')
+         .populate('players', 'username email')
+
+      if (!campaign) {
+         return res.status(404).json({ message: "Campanha não encontrada" })
+      }
+
+      let allUsers = []
+
+      if (campaign.mestre) {
+         allUsers.push(campaign.mestre)
+      }
+
+      if (campaign.players && campaign.players.length > 0) {
+         allUsers = [...allUsers, ...campaign.players]
+      }
+
+      const uniqueUsers = allUsers.filter((user, index, self) =>
+         user._id.toString() !== currentUserId &&
+         index === self.findIndex((t) => t._id.toString() === user._id.toString())
+      )
+
+      res.json(uniqueUsers)
+
+   } 
+   catch (error) {
+      console.error("Erro ao buscar usuários para compartilhar:", error)
+      res.status(500).json({ message: "Erro ao buscar lista de jogadores." })
    }
 }
 exports.shareCharacter = async (req, res) => {
@@ -165,10 +232,18 @@ exports.deleteCharacter = async (req, res) => {
       const { id } = req.params
       const userId = req.user.id
 
-      const char = await Character.findOneAndDelete({ _id: id, owner: userId })
+      const char = await Character.findById(id).populate('campaign')
       if (!char) {
          return res.status(404).json({ message: "Personagem não encontrado ou sem permissão." })
       }
+
+      const isOwner = char.owner.toString() === userId
+      const isMaster = char.campaign && char.campaign.mestre.toString() === userId
+      if (!isOwner && !isMaster) {
+         return res.status(403).json({ message: "Sem permissão para deletar." })
+      }
+
+      await Character.findByIdAndDelete(id)
       res.json({ message: "Personagem deletado com sucesso.", id: id })
 
    } catch (error) {

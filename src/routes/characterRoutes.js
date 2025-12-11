@@ -1,16 +1,17 @@
 const express = require('express')
 const router = express.Router()
-const { createCharacter, getMyCharacters, updateCharacter, shareCharacter, unshareCharacter, deleteCharacter } = require('../controllers/characterController')
+const characterController = require('../controllers/characterController')
 
 const { verifyToken } = require('../middleware/authMiddleware')
 
 router.use(verifyToken)
 
-router.post('/', createCharacter)
-router.get('/my/:campaignId', getMyCharacters)
-router.put('/:id', updateCharacter)
-router.post('/:id/share',  shareCharacter)
-router.delete('/:id/share', unshareCharacter)
-router.delete('/:id', deleteCharacter)
+router.post('/', characterController.createCharacter)
+router.get('/my/:campaignId', characterController.getMyCharacters)
+router.put('/:id', characterController.updateCharacter)
+router.get('/:id/shareable-users', characterController.getShareableUsers)
+router.post('/:id/share', characterController.shareCharacter)
+router.delete('/:id/share', characterController.unshareCharacter)
+router.delete('/:id', characterController.deleteCharacter)
 
 module.exports = router
