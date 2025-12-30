@@ -18,7 +18,7 @@ exports.createCampaign = async (req, res) => {
          system,
          mestre: req.user._id,
          players: [req.user.id],
-         activeScene,
+         activeScene: null,
 
          features: features || {}
       })

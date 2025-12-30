@@ -7,6 +7,7 @@ const { verifyToken } = require('../middleware/authMiddleware')
 router.use(verifyToken)
 
 router.post('/', characterController.createCharacter)
+router.get('/:id', characterController.getCharacter)
 router.get('/my/:campaignId', characterController.getMyCharacters)
 router.put('/:id', characterController.updateCharacter)
 router.get('/:id/shareable-users', characterController.getShareableUsers)

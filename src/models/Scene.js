@@ -1,18 +1,18 @@
 const mongoose = require('mongoose')
 
 const SceneElementSchema = new mongoose.Schema({
-   id: { type: String, required: true }, 
+   id: { type: String, required: true },
 
-   type: { 
-      type: String, 
-      enum: ['image', 'video', 'token', 'shape', 'drawing'], 
-      default: 'image' 
+   type: {
+      type: String,
+      enum: ['floor', 'object', 'wall', 'token'],
+      default: 'image'
    },
 
-   layer: { 
-      type: String, 
-      enum: ['map', 'object', 'token', 'dm', 'fog'], 
-      default: 'token' 
+   layer: {
+      type: String,
+      enum: ['map', 'object', 'token', 'wall', 'dm', 'fog'],
+      default: 'token'
    },
 
    x: { type: Number, default: 0 },
@@ -24,11 +24,18 @@ const SceneElementSchema = new mongoose.Schema({
    scaleY: { type: Number, default: 1 },
 
    src: { type: String },
-   
+
    opacity: { type: Number, default: 1 },
+   visible: {
+      type: Boolean,
+      default: true
+   },
    locked: { type: Boolean, default: false },
-   
+
    points: [Number],
+   shapeType: { type: String, enum: ['rect', 'poly'], default: 'rect' },
+   tilesX: { type: Number, default: 1 },
+   tilesY: { type: Number, default: 1 },
    stroke: String,
    strokeWidth: Number,
    fill: String,
@@ -75,13 +82,20 @@ const SceneSchema = new mongoose.Schema({
    mapConfig: {
       mode: { type: String, enum: ['static', 'procedural'], default: 'static' },
 
+      mapSize: {
+         hasLimit: { type: Boolean, default: true },
+         mapWidth: { type: Number, default: 30 },
+         mapHeight: { type: Number, default: 20 },
+      },
+
       procedural: {
          theme: { type: String, default: 'default' },
          algorithm: { type: String, default: 'random_growth' },
          dangerLevel: { type: Number, default: 1, min: 1, max: 5 }
       },
 
-      gridEnabled: { type: Boolean, default: true },
+
+      gridSnap: { type: Boolean, default: true },
       gridSize: { type: Number, default: 70 },
       gridColor: { type: String, default: '#000000' },
       gridOpacity: { type: Number, default: 0.3 },

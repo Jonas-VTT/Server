@@ -8,6 +8,7 @@ router.use(verifyToken)
 
 router.post('/', sceneController.createScene)
 router.get('/campaign/:campaignId', sceneController.getScenes)
+router.get('/:id', sceneController.getSceneById)
 router.put('/:id', sceneController.updateScene)
 router.put('/:id/activate', sceneController.activateScene)
 router.delete('/:id', sceneController.deleteScene)

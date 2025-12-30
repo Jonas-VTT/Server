@@ -37,7 +37,7 @@ const SHEET_TEMPLATES = {
 
 exports.createCharacter = async (req, res) => {
    try {
-      const { campaignId } = req.body
+      const { campaignId, name, type, folder } = req.body
       const userId = req.user.id
 
       const campaign = await Campaign.findById(campaignId)
@@ -49,7 +49,11 @@ exports.createCharacter = async (req, res) => {
       const initialSheet = SHEET_TEMPLATES[systemKey] || SHEET_TEMPLATES['default']
 
       const newCharacter = await Character.create({
-         name: 'Novo personagem',
+         name: name || 'Novo personagem',
+
+         type: type || 'pc',
+         folder: folder || null,
+
          imageUrl: 'https://placehold.co/100x100?text=Token',
          campaign: campaignId,
          owner: userId,
@@ -88,6 +92,7 @@ exports.getMyCharacters = async (req, res) => {
       const characters = await Character.find(filter)
          .populate('owner', 'name email')
          .populate('sharedWith', 'name email')
+         console.log(characters)
 
       res.json(characters)
    }
@@ -96,12 +101,35 @@ exports.getMyCharacters = async (req, res) => {
       res.status(500).json({ message: 'Erro ao buscar personagens' })
    }
 }
+exports.getCharacter = async (req, res) => {
+   try {
+      const { id } = req.params
 
+      const character = await Character.findById(id)
+
+      if (!character) {
+         return res.status(404).json({ message: 'Personagem não encontrado' })
+      }
+
+      res.json(character)
+   }
+   catch (error) {
+      console.error("Erro ao buscar personagem:", error)
+      res.status(500).json({ message: 'Erro ao buscar dados do personagem' })
+   }
+}
 exports.updateCharacter = async (req, res) => {
    try {
       const { id } = req.params
-      const updates = req.body
       const userId = req.user.id
+
+      const updates = { ...req.body }
+      delete updates._id
+      delete updates.owner
+      delete updates.campaign
+      delete updates.createdAt
+      delete updates.updatedAt
+      delete updates.__v
 
       const oldChar = await Character.findById(id).populate('campaign')
       if (!oldChar) {
@@ -110,36 +138,37 @@ exports.updateCharacter = async (req, res) => {
 
       const isOwner = oldChar.owner.toString() === userId
       const isShared = oldChar.sharedWith.includes(userId)
-      const isMaster = oldChar.campaign && oldChar.campaign?.mestre?.toString() === userId
+      const isMaster = oldChar.campaign && oldChar.campaign.mestre?.toString() === userId
+
       if (!isOwner && !isShared && !isMaster) {
          return res.status(403).json({ message: "Sem permissão para editar." })
       }
 
       if (updates.imageUrl && oldChar.imageUrl && updates.imageUrl !== oldChar.imageUrl) {
          if (oldChar.imageUrl.includes('/uploads/')) {
+            const path = require('path')
+            const fs = require('fs')
             const relativePath = oldChar.imageUrl.split('/uploads/')[1]
             const filePath = path.join(process.cwd(), 'src', 'uploads', relativePath)
-
-            fs.unlink(filePath, (err) => {
-               if (err) {
-                  console.error("Erro ao deletar imagem antiga (pode ter sido deletada já):", err.message)
-               }
-            })
+            fs.unlink(filePath, (err) => { if (err) console.error("Erro apagar img:", err.message) })
          }
       }
-
       const updatedCharacter = await Character.findByIdAndUpdate(
          id,
          { $set: updates },
          { new: true }
       )
+      if (req.io) {
+         req.io.to(updatedCharacter.campaign.toString()).emit('character_updated', updatedCharacter)
+      }
       res.json(updatedCharacter)
    }
    catch (error) {
-      console.error("Erro ao atualizar personagem:", error)
-      res.status(500).json({ message: 'Erro ao salvar alterações' })
+      console.error("Erro update:", error)
+      res.status(500).json({ message: 'Erro ao salvar' })
    }
 }
+
 exports.getShareableUsers = async (req, res) => {
    try {
       const { id } = req.params
@@ -179,7 +208,7 @@ exports.getShareableUsers = async (req, res) => {
 
       res.json(uniqueUsers)
 
-   } 
+   }
    catch (error) {
       console.error("Erro ao buscar usuários para compartilhar:", error)
       res.status(500).json({ message: "Erro ao buscar lista de jogadores." })

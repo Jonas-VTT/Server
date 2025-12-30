@@ -35,6 +35,29 @@ exports.syncDatabase = async () => {
                   modified = true
                }
             }
+            if (modelName === 'Scene') {
+               if (doc.elements && doc.elements.length > 0) {
+                  doc.elements.forEach(el => {
+                     if (el.type == 'shape') {
+                        let newType = 'object'
+
+                        if (el.layer == 'wall') {
+                           newType = 'wall'
+                        }
+                        else if (el.layer = 'map') {
+                           newType = 'floor'
+                        }
+                        else if (el.shapeType === 'poly' && (el.strokeWidth || 0) > 5) {
+                           newType = 'wall'
+                        }
+                        
+                        console.log(`   🛠️ Scene "${doc.name}": Convertendo elemento ${el.type} -> ${newType}`)
+                        el.type = newType
+                        modified = true
+                     }
+                  })
+               }
+            }
 
             if (!modified) {
                doc.markModified('updatedAt')

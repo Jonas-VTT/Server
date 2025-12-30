@@ -7,16 +7,17 @@ exports.uploadImage = (req, res) => {
       }
 
       const ALLOWED_FOLDERS = ['tokens', 'images', 'videos']
-      const folder = req.params.folder
+
+      let folder = req.params.folder
+
       if (!folder || !ALLOWED_FOLDERS.includes(folder)) {
          folder = 'misc'
       }
-      const baseUrl = `http://localhost:${process.env.PORT}`
-      const fileUrl = `${baseUrl}/uploads/${folder}/${req.file.filename}`
+      const relativeUrl = `/uploads/${folder}/${req.file.filename}`
 
       res.json({
          message: 'Upload realizado com sucesso!',
-         url: fileUrl
+         url: relativeUrl
       })
    } catch (error) {
       console.error("Erro no controller de upload:", error)
