@@ -16,7 +16,7 @@ exports.createCampaign = async (req, res) => {
       const newCampaign = await Campaign.create({
          title,
          system,
-         mestre: req.user._id,
+         master: req.user._id,
          players: [req.user.id],
          activeScene: null,
 
@@ -36,7 +36,7 @@ exports.getUserCampaigns = async (req, res) => {
 
       const campaigns = await Campaign.find({
          $or: [
-            { mestre: req.user.id },
+            { master: req.user.id },
             { players: req.user.id }
          ]
       }).sort({ createdAt: -1 })
@@ -51,7 +51,7 @@ exports.getUserCampaigns = async (req, res) => {
 exports.getCampaignById = async (req, res) => {
    try {
       const campaign = await Campaign.findById(req.params.id)
-         .populate('mestre', 'name email')
+         .populate('master', 'name email')
          .populate('players', 'name email')
          .populate('activeScene')
 
@@ -63,13 +63,13 @@ exports.getCampaignById = async (req, res) => {
          return res.status(401).json({ message: "Você precisa estar logado" })
       }
 
-      const mestreId = campaign.mestre ? campaign.mestre._id.toString() : null
+      const masterId = campaign.master ? campaign.master._id.toString() : null
       const userId = req.user.id
 
-      const isMestre = mestreId === userId
+      const ismaster = masterId === userId
       const isPlayer = campaign.players.some(p => p._id.toString() === userId)
 
-      if (!isMestre && !isPlayer) {
+      if (!ismaster && !isPlayer) {
          return res.status(403).json({ message: 'Você não tem acesso a esta campanha' })
       }
 
@@ -85,8 +85,8 @@ exports.getInviteCode = async (req, res) => {
       const userId = req.user.id
 
       // Verifica se é o dono
-      const campaign = await Campaign.findOne({ _id: id, mestre: userId })
-      if (!campaign) return res.status(403).json({ message: "Apenas o mestre pode convidar." })
+      const campaign = await Campaign.findOne({ _id: id, master: userId })
+      if (!campaign) return res.status(403).json({ message: "Apenas o master pode convidar." })
 
       // Se não tiver código ainda, cria um agora
       if (!campaign.inviteCode) {
@@ -105,7 +105,7 @@ exports.refreshInviteCode = async (req, res) => {
       const { id } = req.params
       const userId = req.user.id
 
-      const campaign = await Campaign.findOne({ _id: id, mestre: userId })
+      const campaign = await Campaign.findOne({ _id: id, master: userId })
       if (!campaign) return res.status(403).json({ message: "Sem permissão." })
 
       // Gera um novo e substitui o antigo
@@ -127,7 +127,7 @@ exports.joinCampaign = async (req, res) => {
       if (!campaign) return res.status(404).json({ message: "Convite inválido ou expirado." })
 
       const alreadyPlayer = campaign.players.some(p => p.toString() === userId)
-      const isMaster = campaign.mestre.toString() === userId
+      const isMaster = campaign.master.toString() === userId
 
       if (alreadyPlayer || isMaster) {
          return res.status(200).json({ message: "Você já está nesta campanha!", campaignId: campaign._id })

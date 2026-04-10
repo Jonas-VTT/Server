@@ -29,6 +29,15 @@ exports.syncDatabase = async () => {
             let modified = false
 
             if (modelName === 'Campaign') {
+               const oldMestre = doc.get('mestre')
+
+               if (oldMestre && !doc.master) {
+                  console.log(`   👤 Campaign "${doc.title}": Migrando owner (${oldMestre})`)
+
+                  doc.master = oldMestre
+                  doc.set('mestre', undefined, { strict: false })
+                  modified = true
+               }
                if (doc.activeScene === undefined) {
                   doc.activeScene = null
                   doc.markModified('activeScene')
@@ -50,7 +59,7 @@ exports.syncDatabase = async () => {
                         else if (el.shapeType === 'poly' && (el.strokeWidth || 0) > 5) {
                            newType = 'wall'
                         }
-                        
+
                         console.log(`   🛠️ Scene "${doc.name}": Convertendo elemento ${el.type} -> ${newType}`)
                         el.type = newType
                         modified = true

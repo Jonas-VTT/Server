@@ -77,7 +77,7 @@ exports.getMyCharacters = async (req, res) => {
       const campaign = await Campaign.findById(campaignId)
       if (!campaign) return res.status(404).json({ message: "Campanha não encontrada" })
       const userId = req.user.id
-      const isMaster = campaign.mestre.toString() === userId
+      const isMaster = campaign.master.toString() === userId
 
       let filter = { campaign: campaignId }
       if (isMaster) {
@@ -92,8 +92,6 @@ exports.getMyCharacters = async (req, res) => {
       const characters = await Character.find(filter)
          .populate('owner', 'name email')
          .populate('sharedWith', 'name email')
-         console.log(characters)
-
       res.json(characters)
    }
    catch (error) {
@@ -138,7 +136,7 @@ exports.updateCharacter = async (req, res) => {
 
       const isOwner = oldChar.owner.toString() === userId
       const isShared = oldChar.sharedWith.includes(userId)
-      const isMaster = oldChar.campaign && oldChar.campaign.mestre?.toString() === userId
+      const isMaster = oldChar.campaign && oldChar.campaign.master?.toString() === userId
 
       if (!isOwner && !isShared && !isMaster) {
          return res.status(403).json({ message: "Sem permissão para editar." })
@@ -184,7 +182,7 @@ exports.getShareableUsers = async (req, res) => {
       }
 
       const campaign = await Campaign.findById(character.campaign)
-         .populate('mestre', 'username email')
+         .populate('master', 'username email')
          .populate('players', 'username email')
 
       if (!campaign) {
@@ -193,8 +191,8 @@ exports.getShareableUsers = async (req, res) => {
 
       let allUsers = []
 
-      if (campaign.mestre) {
-         allUsers.push(campaign.mestre)
+      if (campaign.master) {
+         allUsers.push(campaign.master)
       }
 
       if (campaign.players && campaign.players.length > 0) {
@@ -267,7 +265,7 @@ exports.deleteCharacter = async (req, res) => {
       }
 
       const isOwner = char.owner.toString() === userId
-      const isMaster = char.campaign && char.campaign.mestre.toString() === userId
+      const isMaster = char.campaign && char.campaign.master.toString() === userId
       if (!isOwner && !isMaster) {
          return res.status(403).json({ message: "Sem permissão para deletar." })
       }

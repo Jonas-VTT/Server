@@ -13,7 +13,7 @@ const CampaignSchema = new mongoose.Schema({
       }
    },
 
-   mestre: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+   master: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
    players: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
    inviteCode: {type: String, unique: true, sparse: true},
 

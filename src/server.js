@@ -3,11 +3,10 @@ const express = require('express')
 const http = require('http')
 const cors = require('cors')
 const path = require('path')
-const fs = require('fs')
 const { Server } = require('socket.io')
 const connectDB = require('./config/db')
 const { syncDatabase } = require('./utils/dbSync')
-const uploadConfig = require('./config/upload')
+const Message = require('./models/Message')
 
 const app = express()
 const server = http.createServer(app)
@@ -20,9 +19,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 const io = new Server(server, {
   cors: {
-    origin: "*", // Libera para qualquer um (Localhost, IP de rede, etc)
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true // Necessário se houver cookies, mas com * as vezes dá conflito em alguns browsers, tente false se der erro
+    credentials: true
   }
 })
 app.use((req, res, next) => {
@@ -43,8 +42,6 @@ io.on('connection', (socket) => {
   socket.on('join_campaign', (campaignId) => {
     socket.join(campaignId)
     console.log(`Usuário ${socket.id} entrou na campanha ${campaignId}`)
-
-    const size = io.sockets.adapter.rooms.get(campaignId)?.size || 0
   })
 
   socket.on('gm_change_scene', ({ campaignId, scene }) => {
@@ -61,6 +58,39 @@ io.on('connection', (socket) => {
 
   socket.on('gm_sync_view', ({ campaignId, x, y, scale }) => {
     socket.to(campaignId).emit('sync_view', { x, y, scale })
+  })
+
+  socket.on('fetch_chat_history', async (campaignId) => {
+    try {
+      const history = await Message.find({ campaign: campaignId })
+        .sort({ timestamp: -1 })
+        .limit(50)
+
+      socket.emit('chat_history', history.reverse())
+    } 
+    catch (error) {
+      console.error("Erro ao buscar histórico:", error)
+    }
+  })
+
+  socket.on('send_message', async (data) => {
+    try {
+      const newMessage = await Message.create({
+        campaign: data.campaignId,
+        sender: data.sender,
+        senderId: data.senderId,
+        type: data.type,
+        isBlind: data.isBlind || false,
+        content: data.content,
+        timestamp: data.timestamp || new Date()
+      })
+
+      io.to(data.campaignId).emit('chat_message', newMessage)
+
+    } 
+    catch (error) {
+      console.error("Erro ao salvar mensagem:", error)
+    }
   })
 })
 
