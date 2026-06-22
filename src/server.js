@@ -2,7 +2,6 @@ require('dotenv').config()
 const express = require('express')
 const http = require('http')
 const cors = require('cors')
-const path = require('path')
 const { Server } = require('socket.io')
 const connectDB = require('./config/db')
 const { syncDatabase } = require('./utils/dbSync')
@@ -14,7 +13,6 @@ const server = http.createServer(app)
 app.use(cors())
 app.use(express.json({ limit: '5gb' }))
 app.use(express.urlencoded({ limit: '5gb', extended: true }))
-app.use(express.static(path.join(__dirname, 'dist')))
 
 const io = new Server(server, {
   cors: {
@@ -91,10 +89,6 @@ io.on('connection', (socket) => {
       console.error("Erro ao salvar mensagem:", error)
     }
   })
-})
-
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 })
 
 server.timeout = 0
