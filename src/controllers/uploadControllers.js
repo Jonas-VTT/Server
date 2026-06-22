@@ -1,7 +1,7 @@
 require('dotenv').config()
 const { uploadToB2 } = require('../utils/b2Storage')
 
-exports.uploadImage = (req, res) => {
+exports.uploadImage = async (req, res) => {
    try {
       if (!req.file) {
          return res.status(400).json({ message: 'Nenhum arquivo enviado.' })
