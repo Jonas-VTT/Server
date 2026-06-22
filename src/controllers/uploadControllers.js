@@ -1,4 +1,5 @@
 require('dotenv').config()
+const { uploadToB2 } = require('../utils/b2Storage')
 
 exports.uploadImage = (req, res) => {
    try {
@@ -10,16 +11,19 @@ exports.uploadImage = (req, res) => {
 
       let folder = req.params.folder
 
+      let folder = req.params.folder
       if (!folder || !ALLOWED_FOLDERS.includes(folder)) {
          folder = 'misc'
       }
-      const relativeUrl = `/uploads/${folder}/${req.file.filename}`
+
+      const cloudUrl = await uploadToB2(req.file.buffer, req.file.originalname, req.file.mimetype, folder)
 
       res.json({
          message: 'Upload realizado com sucesso!',
-         url: relativeUrl
+         url: cloudUrl
       })
-   } catch (error) {
+   } 
+   catch (error) {
       console.error("Erro no controller de upload:", error)
       res.status(500).json({ message: 'Erro interno ao processar imagem.' })
    }

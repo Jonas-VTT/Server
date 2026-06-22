@@ -15,7 +15,6 @@ app.use(cors())
 app.use(express.json({ limit: '5gb' }))
 app.use(express.urlencoded({ limit: '5gb', extended: true }))
 app.use(express.static(path.join(__dirname, 'dist')))
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 const io = new Server(server, {
   cors: {

@@ -1,5 +1,3 @@
-const fs = require('fs')
-const path = require('path')
 const Character = require('../models/Character')
 const Campaign = require('../models/Campaign')
 
@@ -143,13 +141,7 @@ exports.updateCharacter = async (req, res) => {
       }
 
       if (updates.imageUrl && oldChar.imageUrl && updates.imageUrl !== oldChar.imageUrl) {
-         if (oldChar.imageUrl.includes('/uploads/')) {
-            const path = require('path')
-            const fs = require('fs')
-            const relativePath = oldChar.imageUrl.split('/uploads/')[1]
-            const filePath = path.join(process.cwd(), 'src', 'uploads', relativePath)
-            fs.unlink(filePath, (err) => { if (err) console.error("Erro apagar img:", err.message) })
-         }
+         // TODO: Inserir a chamada da API para deletar a imagem antiga no Backblaze B2
       }
       const updatedCharacter = await Character.findByIdAndUpdate(
          id,

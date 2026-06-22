@@ -1,10 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const assetController = require('../controllers/assetController')
-const uploadConfig = require('../config/upload')
-const multer = require('multer')
-
-const upload = multer(uploadConfig)
+const upload = require('../config/upload')
 
 router.post('/folders', assetController.createFolder)
 router.get('/folders/:campaignId', assetController.getFolders)

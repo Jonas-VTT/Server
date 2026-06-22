@@ -1,8 +1,7 @@
 const Asset = require('../models/Asset')
 const AssetFolder = require('../models/AssetFolder')
 const sizeOf = require('image-size')
-const path = require('path')
-const fs = require('fs')
+const { uploadToB2, deleteFromB2 } = require('../utils/b2Storage')
 
 
 exports.createFolder = async (req, res) => {
@@ -10,18 +9,18 @@ exports.createFolder = async (req, res) => {
         const { name, campaign, parent } = req.body
         const folder = await AssetFolder.create({ name, campaign, parent })
         res.status(201).json(folder)
-    } catch (error) {
+    } 
+    catch (error) {
         res.status(500).json({ message: "Erro ao criar pasta de assets" })
     }
 }
 exports.getFolders = async (req, res) => {
     try {
         const { campaignId } = req.params
-        // Busca pastas raiz (parent: null) ou todas, dependendo de como vamos montar a UI
-        // Por enquanto vamos buscar TODAS da campanha e montar a árvore no front
         const folders = await AssetFolder.find({ campaign: campaignId })
         res.json(folders)
-    } catch (error) {
+    } 
+    catch (error) {
         res.status(500).json({ message: "Erro ao buscar pastas" })
     }
 }
@@ -47,7 +46,7 @@ exports.uploadAsset = async (req, res) => {
 
         let dimensions = { width: 100, height: 100 }
         try {
-            dimensions = sizeOf(req.file.path)
+            dimensions = sizeOf(req.file.buffer)
         }
         catch (e) {
             console.log("Não foi possível ler dimensões da imagem")
@@ -57,7 +56,7 @@ exports.uploadAsset = async (req, res) => {
         if (req.file.mimetype.startsWith('image/')) subfolder = 'images'
         else if (req.file.mimetype.startsWith('video/')) subfolder = 'videos'
 
-        const url = `/uploads/${subfolder}/${req.file.filename}`
+        const url = await uploadToB2(req.file.buffer, req.file.originalname, req.file.mimetype, subfolder)
 
         const asset = await Asset.create({
             name: name || req.file.originalname,
@@ -84,14 +83,7 @@ exports.deleteAsset = async (req, res) => {
         if (!asset) return res.status(404).json({ message: "Asset não encontrado" })
 
         if (asset.url) {
-            const filePath = path.join(__dirname, '..', asset.url)
-            
-            if (fs.existsSync(filePath)) {
-                fs.unlink(filePath, (err) => {
-                    if (err) console.error("Erro ao deletar arquivo físico:", err)
-                    else console.log("Arquivo físico deletado:", filePath)
-                })
-            }
+            await deleteFromB2(asset.url)
         }
 
         await Asset.findByIdAndDelete(id)
