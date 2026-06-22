@@ -10,8 +10,6 @@ exports.uploadImage = (req, res) => {
       const ALLOWED_FOLDERS = ['tokens', 'images', 'videos']
 
       let folder = req.params.folder
-
-      let folder = req.params.folder
       if (!folder || !ALLOWED_FOLDERS.includes(folder)) {
          folder = 'misc'
       }
