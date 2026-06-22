@@ -35,6 +35,10 @@ app.use('/api/library', require('./routes/libraryRoutes'))
 app.use('/api/assets', require('./routes/assetRoutes'))
 app.use('/api/structures', require('./routes/structureRoutes'))
 
+app.get('/', (req, res) => {
+  res.status(200).send('API do JonasVTT está online! (rota de healtcheck) 🎲')
+})
+
 io.on('connection', (socket) => {
   socket.on('join_campaign', (campaignId) => {
     socket.join(campaignId)
