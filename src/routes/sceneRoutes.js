@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const sceneController = require('../controllers/sceneController')
+const elementController = require('../controllers/elementController')
 
 const { verifyToken } = require('../middleware/authMiddleware')
 
@@ -17,8 +18,8 @@ router.post('/folders', sceneController.createFolder)
 router.get('/folders/:campaignId', sceneController.getFolders)
 router.delete('/folders/:id', sceneController.deleteFolder)
 
-router.post('/:id/elements', sceneController.addElement)
-router.put('/:id/elements/:elementId', sceneController.updateElement)
-router.delete('/:id/elements/:elementId', sceneController.removeElement)
+router.post('/:sceneId/elements/:collectionType', elementController.addElement)
+router.put('/:sceneId/elements/:collectionType/:elementId', elementController.updateElement)
+router.delete('/:sceneId/elements/:collectionType/:elementId', elementController.removeElement)
 
 module.exports = router

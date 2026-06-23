@@ -1,6 +1,11 @@
 const Folder = require('../models/Folder')
 const Scene = require('../models/Scene')
 const Campaign = require('../models/Campaign')
+const MapShape = require('../models/map/MapShape')
+const MapWall = require('../models/map/MapWall')
+const MapProp = require('../models/map/MapProp')
+const MapToken = require('../models/map/MapToken')
+const MapLight = require('../models/map/MapLight')
 
 exports.createScene = async (req, res) => {
     try {
@@ -29,8 +34,28 @@ exports.getSceneById = async (req, res) => {
         if (!scene) {
             return res.status(404).json({ message: "Cena não encontrada" })
         }
-        res.json(scene)
-    } catch (error) {
+
+        const [shapes, walls, props, tokens, lights] = await Promise.all([
+            MapShape.find({ scene: scene._id }),
+            MapWall.find({ scene: scene._id }),
+            MapProp.find({ scene: scene._id }),
+            MapToken.find({ scene: scene._id }),
+            MapLight.find({ scene: scene._id })
+        ])
+
+        const sceneData = scene.toObject()
+        sceneData.elements = {
+            shapes,
+            walls,
+            props,
+            tokens,
+            lights
+        }
+
+        res.json(sceneData)
+    } 
+    catch (error) {
+        console.error("Erro ao buscar cena:", error)
         res.status(500).json({ message: "Erro ao buscar cena" })
     }
 }
@@ -117,80 +142,5 @@ exports.getFolders = async (req, res) => {
         res.json(folders)
     } catch (error) {
         res.status(500).json({ message: "Erro ao buscar pastas" })
-    }
-}
-
-exports.addElement = async (req, res) => {
-    try {
-        const { id } = req.params
-        const elementData = req.body
-
-        const newElement = {
-            ...elementData,
-            id: Date.now().toString()
-        }
-
-        const updatedScene = await Scene.findByIdAndUpdate(
-            id,
-            { $push: { elements: newElement } },
-            { new: true }
-        )
-
-        if (req.io) {
-            req.io.to(updatedScene.campaign.toString()).emit('scene_updated', updatedScene)
-        }
-
-        res.json(updatedScene)
-    }
-    catch (error) {
-        res.status(500).json({ message: "Erro ao adicionar token: ", error })
-    }
-}
-exports.updateElement = async (req, res) => {
-    try {
-        const { id, elementId } = req.params
-        const updates = req.body
-
-        const updateFields = {}
-        for (const key of Object.keys(updates)) {
-            updateFields[`elements.$.${key}`] = updates[key]
-        }
-
-        const updatedScene = await Scene.findOneAndUpdate(
-            { _id: id, "elements.id": elementId },
-            { $set: updateFields },
-            { new: true }
-        )
-
-        if (!updatedScene) {
-            return res.status(404).json({ message: "Cena ou elemento não encontrado" })
-        }
-
-        if (req.io) {
-            const roomId = updatedScene.campaign.toString()
-            req.io.to(roomId).emit('scene_updated', updatedScene)
-        }
-
-        res.json(updatedScene)
-    }
-    catch (error) {
-        console.error("Erro ao mover elemento:", error)
-        res.status(500).json({ message: "Erro ao atualizar elemento" })
-    }
-}
-exports.removeElement = async (req, res) => {
-    try {
-        const { id, elementId } = req.params
-
-        const updatedScene = await Scene.findByIdAndUpdate(
-            id,
-            { $pull: { elements: { id: elementId } } },
-            { new: true }
-        )
-
-        res.json(updatedScene)
-
-    } catch (error) {
-        res.status(500).json({ message: "Erro ao remover elemento" })
     }
 }
