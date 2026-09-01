@@ -1,6 +1,7 @@
+const mongoose = require('mongoose')
 const Scene = require('../models/Scene')
 const MapShape = require('../models/map/MapShape')
-const MapWall = require('../models/map/MapWall')
+const MapCollision = require('../models/map/MapCollision')
 const MapProp = require('../models/map/MapProp')
 const MapToken = require('../models/map/MapToken')
 const MapLight = require('../models/map/MapLight')
@@ -8,10 +9,13 @@ const MapLight = require('../models/map/MapLight')
 const getModel = (type) => {
     const models = {
         shape: MapShape,
-        wall: MapWall,
+        floor: MapShape,
+        wall: MapShape,
         prop: MapProp,
+        object: MapProp,
         token: MapToken,
-        light: MapLight
+        light: MapLight,
+        collision: MapCollision
     }
     return models[type]
 }
@@ -23,7 +27,15 @@ exports.addElement = async (req, res) => {
         
         if (!Model) return res.status(400).json({ message: "Tipo de elemento inválido." })
 
-        const newElement = await Model.create({ ...req.body, scene: sceneId })
+        const elementData = req.body
+        if (!elementData.id) {
+            elementData.id = Date.now().toString() + Math.floor(Math.random() * 1000).toString()
+        }
+
+        const newElement = await Model.create({ 
+            ...elementData, 
+            scene: sceneId 
+        })
 
         const scene = await Scene.findById(sceneId)
         if (req.io && scene) {
@@ -31,7 +43,8 @@ exports.addElement = async (req, res) => {
         }
 
         res.status(201).json(newElement)
-    } catch (error) {
+    } 
+    catch (error) {
         console.error("Erro ao adicionar elemento:", error)
         res.status(500).json({ message: "Erro ao criar elemento." })
     }
@@ -45,7 +58,7 @@ exports.updateElement = async (req, res) => {
         if (!Model) return res.status(400).json({ message: "Tipo de elemento inválido." })
 
         const updatedElement = await Model.findOneAndUpdate(
-            { id: elementId },
+            { id: elementId }, 
             { $set: req.body },
             { new: true }
         )

@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const MapTokenSchema = new mongoose.Schema({
     scene: { type: mongoose.Schema.Types.ObjectId, ref: 'Scene', required: true, index: true },
     id: { type: String, required: true },
+    type: { type: String, required: true },
 
     linkedCharacterId: { type: mongoose.Schema.Types.ObjectId, ref: 'Character', default: null },
     name: { type: String, default: 'Desconhecido' },
@@ -27,3 +28,5 @@ const MapTokenSchema = new mongoose.Schema({
     auraColor: { type: String, default: 'transparent' },
     auraRadius: { type: Number, default: 0 }
 })
+
+module.exports = mongoose.model('MapToken', MapTokenSchema)

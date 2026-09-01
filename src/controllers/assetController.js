@@ -104,17 +104,22 @@ exports.updateAsset = async (req, res) => {
         }
 
         if (req.file) {
+            const oldAsset = await Asset.findById(id)
+            if (oldAsset && oldAsset.url) {
+                await deleteFromB2(oldAsset.url)
+            }
+
             let subfolder = 'misc'
             if (req.file.mimetype.startsWith('image/')) subfolder = 'images'
             else if (req.file.mimetype.startsWith('video/')) subfolder = 'videos'
 
-            updateData.url = `/uploads/${subfolder}/${req.file.filename}`
+            updateData.url = await uploadToB2(req.file.buffer, req.file.originalname, req.file.mimetype, subfolder)
             try {
-                const dimensions = sizeOf(req.file.path)
+                const dimensions = sizeOf(req.file.buffer)
                 updateData.width = dimensions.width
                 updateData.height = dimensions.height
-            } 
-            catch (e) { }
+            }
+            catch (e) { console.log("Não foi possível ler dimensões") }
         }
 
         const updatedAsset = await Asset.findByIdAndUpdate(

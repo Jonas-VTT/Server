@@ -1,5 +1,6 @@
 const Character = require('../models/Character')
 const Campaign = require('../models/Campaign')
+const { deleteFromB2 } = require('../utils/b2Storage')
 
 const SHEET_TEMPLATES = {
    'ordem-paranormal': {
@@ -119,14 +120,6 @@ exports.updateCharacter = async (req, res) => {
       const { id } = req.params
       const userId = req.user.id
 
-      const updates = { ...req.body }
-      delete updates._id
-      delete updates.owner
-      delete updates.campaign
-      delete updates.createdAt
-      delete updates.updatedAt
-      delete updates.__v
-
       const oldChar = await Character.findById(id).populate('campaign')
       if (!oldChar) {
          return res.status(404).json({ message: 'Personagem não encontrado' })
@@ -140,12 +133,36 @@ exports.updateCharacter = async (req, res) => {
          return res.status(403).json({ message: "Sem permissão para editar." })
       }
 
-      if (updates.imageUrl && oldChar.imageUrl && updates.imageUrl !== oldChar.imageUrl) {
-         // TODO: Inserir a chamada da API para deletar a imagem antiga no Backblaze B2
+      const updates = { ...req.body }
+      delete updates._id
+      delete updates.owner
+      delete updates.campaign
+      delete updates.createdAt
+      delete updates.updatedAt
+      delete updates.__v
+
+      const flattenObject = (obj, prefix = '') => {
+         let result = {}
+         for (const key in obj) {
+            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+               Object.assign(result, flattenObject(obj[key], prefix + key + '.'))
+            } 
+            else {
+               result[prefix + key] = obj[key]
+            }
+         }
+         return result
       }
+
+      const flattenedUpdates = flattenObject(updates)
+
+      if (updates.imageUrl && oldChar.imageUrl && updates.imageUrl !== oldChar.imageUrl) {
+         await deleteFromB2(oldChar.imageUrl)
+      }
+      
       const updatedCharacter = await Character.findByIdAndUpdate(
          id,
-         { $set: updates },
+         { $set: flattenedUpdates },
          { new: true }
       )
       if (req.io) {
@@ -262,10 +279,15 @@ exports.deleteCharacter = async (req, res) => {
          return res.status(403).json({ message: "Sem permissão para deletar." })
       }
 
+      if (char.imageUrl) {
+         await deleteFromB2(char.imageUrl)
+      }
+
       await Character.findByIdAndDelete(id)
       res.json({ message: "Personagem deletado com sucesso.", id: id })
 
-   } catch (error) {
+   } 
+   catch (error) {
       console.error("Erro ao deletar:", error)
       res.status(500).json({ message: "Erro ao deletar personagem." })
    }

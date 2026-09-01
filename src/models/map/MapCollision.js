@@ -1,8 +1,9 @@
 const mongoose = require('mongoose')
 
-const MapWallSchema = new mongoose.Schema({
+const MapCollisionSchema = new mongoose.Schema({
     scene: { type: mongoose.Schema.Types.ObjectId, ref: 'Scene', required: true, index: true },
     id: { type: String, required: true },
+    type: { type: String, required: true },
 
     layer: { type: String, enum: ['map', 'object', 'token', 'wall', 'dm'], default: 'wall' },
 
@@ -13,4 +14,4 @@ const MapWallSchema = new mongoose.Schema({
     isOpen: { type: Boolean, default: false }
 })
 
-module.exports = mongoose.model('MapWall', MapWallSchema)
+module.exports = mongoose.model('MapCollision', MapCollisionSchema)

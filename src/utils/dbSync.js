@@ -1,3 +1,5 @@
+const mongoose = require('mongoose')
+
 const Campaign = require('../models/Campaign')
 const Character = require('../models/Character')
 const Folder = require('../models/Folder')
@@ -45,26 +47,29 @@ exports.syncDatabase = async () => {
                }
             }
             if (modelName === 'Scene') {
-               if (doc.elements && doc.elements.length > 0) {
-                  doc.elements.forEach(el => {
-                     if (el.type == 'shape') {
-                        let newType = 'object'
+               const elementsRaw = doc.get('elements')
 
-                        if (el.layer == 'wall') {
-                           newType = 'wall'
-                        }
-                        else if (el.layer = 'map') {
-                           newType = 'floor'
-                        }
-                        else if (el.shapeType === 'poly' && (el.strokeWidth || 0) > 5) {
-                           newType = 'wall'
-                        }
+               if (elementsRaw && elementsRaw.length > 0) {
+                  console.log(`   🛠️ Scene "${doc.name}": Migrando ${elementsRaw.length} elementos antigos...`)
+                  
+                  const db = mongoose.connection.db
+                  
+                  for (const el of elementsRaw) {
+                     const elData = el.toObject ? el.toObject() : el
+                     let DestModel;
+                     let collectionName = 'mapprops'
 
-                        console.log(`   🛠️ Scene "${doc.name}": Convertendo elemento ${el.type} -> ${newType}`)
-                        el.type = newType
-                        modified = true
+                     if (elData.type === 'token') collectionName = 'maptokens'
+                     else if (['wall', 'floor', 'shape'].includes(elData.type) || elData.shapeType) collectionName = 'mapshapes'
+
+                     const exists = await db.collection(collectionName).findOne({ id: elData.id, scene: doc._id })
+                     if (!exists) {
+                        await db.collection(collectionName).insertOne({ ...elData, scene: doc._id })
                      }
-                  })
+                  }
+
+                  doc.set('elements', undefined, { strict: false })
+                  modified = true
                }
             }
 

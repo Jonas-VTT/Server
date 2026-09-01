@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const MapPropSchema = new mongoose.Schema({
     scene: { type: mongoose.Schema.Types.ObjectId, ref: 'Scene', required: true, index: true },
     id: { type: String, required: true },
+    type: { type: String, required: true },
 
     layer: { type: String, enum: ['map', 'object', 'token', 'wall', 'dm'], default: 'object' },
 

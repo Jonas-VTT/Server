@@ -1,5 +1,6 @@
 const Campaign = require('../models/Campaign')
 const crypto = require('crypto')
+const mongoose = require('mongoose')
 
 exports.createCampaign = async (req, res) => {
    try {
@@ -73,9 +74,30 @@ exports.getCampaignById = async (req, res) => {
          return res.status(403).json({ message: 'Você não tem acesso a esta campanha' })
       }
 
-      res.json(campaign)
+      const campaignData = campaign.toObject()
+      if (campaignData.activeScene) {
+         const sceneId = campaignData.activeScene._id
+
+         const MapShape = require('../models/map/MapShape')
+         const MapCollision = require('../models/map/MapCollision')
+         const MapProp = require('../models/map/MapProp')
+         const MapToken = require('../models/map/MapToken')
+         const MapLight = require('../models/map/MapLight')
+
+         const [shapes, collisions, props, tokens, lights] = await Promise.all([
+            MapShape.find({ scene: sceneId }),
+            MapCollision.find({ scene: sceneId }),
+            MapProp.find({ scene: sceneId }),
+            MapToken.find({ scene: sceneId }),
+            MapLight.find({ scene: sceneId })
+         ])
+         campaignData.activeScene.elements = [...shapes, ...collisions, ...props, ...tokens, ...lights]
+      }
+
+      res.json(campaignData)
    }
    catch (error) {
+      console.error('Erro ao buscar campanha:', error)
       res.status(500).json({ message: 'Erro ao buscar campanha' })
    }
 }

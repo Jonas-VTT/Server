@@ -2,7 +2,7 @@ const Folder = require('../models/Folder')
 const Scene = require('../models/Scene')
 const Campaign = require('../models/Campaign')
 const MapShape = require('../models/map/MapShape')
-const MapWall = require('../models/map/MapWall')
+const MapCollision = require('../models/map/MapCollision')
 const MapProp = require('../models/map/MapProp')
 const MapToken = require('../models/map/MapToken')
 const MapLight = require('../models/map/MapLight')
@@ -35,22 +35,22 @@ exports.getSceneById = async (req, res) => {
             return res.status(404).json({ message: "Cena não encontrada" })
         }
 
-        const [shapes, walls, props, tokens, lights] = await Promise.all([
+        const [shapes, collisions, props, tokens, lights] = await Promise.all([
             MapShape.find({ scene: scene._id }),
-            MapWall.find({ scene: scene._id }),
+            MapCollision.find({ scene: scene._id }),
             MapProp.find({ scene: scene._id }),
             MapToken.find({ scene: scene._id }),
             MapLight.find({ scene: scene._id })
         ])
 
         const sceneData = scene.toObject()
-        sceneData.elements = {
-            shapes,
-            walls,
-            props,
-            tokens,
-            lights
-        }
+        sceneData.elements = [
+            ...shapes,
+            ...collisions,
+            ...props,
+            ...tokens,
+            ...lights
+        ]
 
         res.json(sceneData)
     } 

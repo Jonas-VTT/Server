@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const MapLightSchema = new mongoose.Schema({
     scene: { type: mongoose.Schema.Types.ObjectId, ref: 'Scene', required: true, index: true },
     id: { type: String, required: true },
+    type: { type: String, required: true },
 
     x: { type: Number, required: true },
     y: { type: Number, required: true },

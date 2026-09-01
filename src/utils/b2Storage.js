@@ -12,7 +12,7 @@ const s3 = new S3Client({
 })
 
 const B2_BUCKET_NAME = process.env.B2_BUCKET_NAME
-const CDN_URL = 'https://media.jonasvtt.com.br'
+const CDN_URL = process.env.B2_PUBLIC_URL
 
 exports.uploadToB2 = async (fileBuffer, originalName, mimetype, folder) => {
     const hash = crypto.randomBytes(6).toString('hex')
