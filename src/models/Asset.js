@@ -6,10 +6,6 @@ const AssetSchema = new mongoose.Schema({
   type: { type: String, default: 'image' },
   campaign: { type: mongoose.Schema.Types.ObjectId, ref: 'Campaign', required: true },
   folder: { type: mongoose.Schema.Types.ObjectId, ref: 'AssetFolder', default: null },
-
-  defaultGridWidth: { type: Number, default: 1 },
-  defaultGridHeight: { type: Number, default: 1 },
-  isTiled: { type: Boolean, default: false },
   
   width: { type: Number, default: 0 },
   height: { type: Number, default: 0 },

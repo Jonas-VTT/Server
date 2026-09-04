@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 const Scene = require('../models/Scene')
-const MapShape = require('../models/map/MapShape')
+const MapFog = require('../models/map/MapFog')
 const MapCollision = require('../models/map/MapCollision')
 const MapProp = require('../models/map/MapProp')
 const MapToken = require('../models/map/MapToken')
@@ -8,9 +8,7 @@ const MapLight = require('../models/map/MapLight')
 
 const getModel = (type) => {
     const models = {
-        shape: MapShape,
-        floor: MapShape,
-        wall: MapShape,
+        fog: MapFog,
         prop: MapProp,
         object: MapProp,
         token: MapToken,

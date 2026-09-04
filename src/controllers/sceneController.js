@@ -1,7 +1,7 @@
 const Folder = require('../models/Folder')
 const Scene = require('../models/Scene')
 const Campaign = require('../models/Campaign')
-const MapShape = require('../models/map/MapShape')
+const MapFog = require('../models/map/MapFog')
 const MapCollision = require('../models/map/MapCollision')
 const MapProp = require('../models/map/MapProp')
 const MapToken = require('../models/map/MapToken')
@@ -36,7 +36,7 @@ exports.getSceneById = async (req, res) => {
         }
 
         const [shapes, collisions, props, tokens, lights] = await Promise.all([
-            MapShape.find({ scene: scene._id }),
+            MapFog.find({ scene: scene._id }),
             MapCollision.find({ scene: scene._id }),
             MapProp.find({ scene: scene._id }),
             MapToken.find({ scene: scene._id }),

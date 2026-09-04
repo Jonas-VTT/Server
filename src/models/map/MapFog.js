@@ -5,7 +5,7 @@ const MapShapeSchema = new mongoose.Schema({
     id: { type: String, required: true },
     type: { type: String, required: true },
 
-    layer: { type: String, enum: ['map', 'object', 'token', 'wall', 'dm'], default: 'map' },
+    layer: { type: String, enum: ['map', 'object', 'token', 'wall', 'dm', 'fog'], default: 'map' },
     shapeType: { type: String, enum: ['rect', 'poly'], default: 'rect' },
 
     x: { type: Number, default: 0 },
@@ -16,13 +16,6 @@ const MapShapeSchema = new mongoose.Schema({
     height: { type: Number, default: 100 },
 
     points: [Number],
-
-    src: { type: String },
-    tilesX: { type: Number, default: 1 },
-    tilesY: { type: Number, default: 1 },
-    fill: { type: String },
-    stroke: { type: String },
-    strokeWidth: { type: Number, default: 0 },
 
     opacity: { type: Number, default: 1 },
     visible: { type: Boolean, default: true },

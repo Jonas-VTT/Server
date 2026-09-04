@@ -78,14 +78,14 @@ exports.getCampaignById = async (req, res) => {
       if (campaignData.activeScene) {
          const sceneId = campaignData.activeScene._id
 
-         const MapShape = require('../models/map/MapShape')
+         const MapFog = require('../models/map/MapFog')
          const MapCollision = require('../models/map/MapCollision')
          const MapProp = require('../models/map/MapProp')
          const MapToken = require('../models/map/MapToken')
          const MapLight = require('../models/map/MapLight')
 
          const [shapes, collisions, props, tokens, lights] = await Promise.all([
-            MapShape.find({ scene: sceneId }),
+            MapFog.find({ scene: sceneId }),
             MapCollision.find({ scene: sceneId }),
             MapProp.find({ scene: sceneId }),
             MapToken.find({ scene: sceneId }),
